@@ -14,7 +14,8 @@ WORKDIR /app
 COPY 02-docker/develop/requirements.txt .
 
 # Bước 4: Cài dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Tăng timeout để giảm lỗi khi mạng chậm
+RUN pip install --no-cache-dir --default-timeout 120 -r requirements.txt
 
 # Bước 5: Copy code vào container
 COPY 02-docker/develop/app.py .

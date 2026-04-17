@@ -10,23 +10,12 @@
 
 # ──────────────────────────────────────────────────────────
 # STAGE 1: Builder
-# Cài đặt tất cả dependencies
+# Tái sử dụng dependencies đã có từ image develop
 # Image này KHÔNG được dùng để deploy
 # ──────────────────────────────────────────────────────────
-FROM python:3.11-slim AS builder
+FROM agent-develop:latest AS builder
 
 WORKDIR /app
-
-# Cài build dependencies (cần cho một số packages như numpy)
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy và cài requirements
-# Dùng --user để install vào /root/.local (dễ copy sang stage 2)
-COPY 02-docker/production/requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
 
 
 # ──────────────────────────────────────────────────────────
@@ -42,7 +31,8 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
 # Copy installed packages từ builder
-COPY --from=builder /root/.local /home/appuser/.local
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
 
 # Copy source code
 COPY 02-docker/production/main.py .
@@ -57,8 +47,8 @@ RUN chown -R appuser:appuser /app
 # Chuyển sang non-root user
 USER appuser
 
-# PATH để Python tìm được packages của --user install
-ENV PATH=/home/appuser/.local/bin:$PATH
+# PATH để Python tìm được executable và modules
+ENV PATH=/usr/local/bin:$PATH
 ENV PYTHONPATH=/app
 
 # Expose port

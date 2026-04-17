@@ -1,6 +1,5 @@
-"""Production config — 12-Factor: tất cả từ environment variables."""
+"""Production config — 12-Factor app settings from environment variables."""
 import os
-import logging
 from dataclasses import dataclass, field
 
 
@@ -16,39 +15,27 @@ class Settings:
     app_name: str = field(default_factory=lambda: os.getenv("APP_NAME", "Production AI Agent"))
     app_version: str = field(default_factory=lambda: os.getenv("APP_VERSION", "1.0.0"))
 
-    # LLM
-    openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
-    llm_model: str = field(default_factory=lambda: os.getenv("LLM_MODEL", "gpt-4o-mini"))
-
     # Security
     agent_api_key: str = field(default_factory=lambda: os.getenv("AGENT_API_KEY", "dev-key-change-me"))
-    jwt_secret: str = field(default_factory=lambda: os.getenv("JWT_SECRET", "dev-jwt-secret"))
-    allowed_origins: list = field(
-        default_factory=lambda: os.getenv("ALLOWED_ORIGINS", "*").split(",")
-    )
+    allowed_origins: list[str] = field(default_factory=lambda: os.getenv("ALLOWED_ORIGINS", "*").split(","))
 
-    # Rate limiting
-    rate_limit_per_minute: int = field(
-        default_factory=lambda: int(os.getenv("RATE_LIMIT_PER_MINUTE", "20"))
-    )
-
-    # Budget
-    daily_budget_usd: float = field(
-        default_factory=lambda: float(os.getenv("DAILY_BUDGET_USD", "5.0"))
-    )
+    # Rate limiting / budget
+    rate_limit_per_minute: int = field(default_factory=lambda: int(os.getenv("RATE_LIMIT_PER_MINUTE", "10")))
+    monthly_budget_usd: float = field(default_factory=lambda: float(os.getenv("MONTHLY_BUDGET_USD", "10.0")))
 
     # Storage
-    redis_url: str = field(default_factory=lambda: os.getenv("REDIS_URL", ""))
+    redis_url: str = field(default_factory=lambda: os.getenv("REDIS_URL", "redis://localhost:6379/0"))
 
-    def validate(self):
-        logger = logging.getLogger(__name__)
-        if self.environment == "production":
-            if self.agent_api_key == "dev-key-change-me":
-                raise ValueError("AGENT_API_KEY must be set in production!")
-            if self.jwt_secret == "dev-jwt-secret":
-                raise ValueError("JWT_SECRET must be set in production!")
-        if not self.openai_api_key:
-            logger.warning("OPENAI_API_KEY not set — using mock LLM")
+    # LLM
+    llm_model: str = field(default_factory=lambda: os.getenv("LLM_MODEL", "mock-llm"))
+
+    def validate(self) -> "Settings":
+        if self.environment == "production" and self.agent_api_key == "dev-key-change-me":
+            raise ValueError("AGENT_API_KEY must be changed in production")
+        if self.rate_limit_per_minute <= 0:
+            raise ValueError("RATE_LIMIT_PER_MINUTE must be > 0")
+        if self.monthly_budget_usd <= 0:
+            raise ValueError("MONTHLY_BUDGET_USD must be > 0")
         return self
 
 

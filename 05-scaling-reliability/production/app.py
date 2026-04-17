@@ -121,6 +121,10 @@ class ChatRequest(BaseModel):
     session_id: str | None = None  # None = tạo session mới
 
 
+class AskRequest(BaseModel):
+    question: str
+
+
 # ──────────────────────────────────────────────────────────
 # Endpoints
 # ──────────────────────────────────────────────────────────
@@ -154,6 +158,18 @@ async def chat(body: ChatRequest):
         "turn": len([m for m in history if m["role"] == "user"]) + 1,
         "served_by": INSTANCE_ID,  # ← thấy rõ bất kỳ instance nào cũng serve được
         "storage": "redis" if USE_REDIS else "in-memory",
+    }
+
+
+@app.post("/ask")
+async def ask_compat(body: AskRequest, x_session_id: str | None = Header(default=None)):
+    """Compatibility endpoint for lab scripts that call /ask."""
+    chat_result = await chat(ChatRequest(question=body.question, session_id=x_session_id))
+    return {
+        "answer": chat_result["answer"],
+        "session_id": chat_result["session_id"],
+        "served_by": chat_result["served_by"],
+        "storage": chat_result["storage"],
     }
 
 
