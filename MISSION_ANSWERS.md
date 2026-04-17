@@ -283,7 +283,12 @@ docker compose down -v
 - Ở các lần chạy gần nhất, HTTP probe thường được gọi khi các `agent` còn `health: starting`, nên kết quả qua nginx là `502 Bad Gateway` cho `/health`, `/ready`, và `/ask`.
 - Rate probe 13 requests ở các lần này trả về chủ yếu `502` (không phản ánh logic rate limiter, mà phản ánh backend chưa sẵn sàng tại thời điểm test).
 - `check_production_ready.py`: `20/20 checks passed (100%)`, nhưng đây là static/code checks, không thay thế được runtime verification.
-- Kết luận trung thực cho báo cáo: đã thực thi Part 6 trên runtime thật, nhưng cần readiness gating (đợi tất cả replicas healthy) để có kết quả HTTP ổn định.
+- Đã deploy public Railway riêng cho Part 6: `https://day12-lab-complete-production.up.railway.app`.
+- Kiểm thử public endpoint thành công:
+	- `GET /health` -> `200`
+	- `GET /ready` -> `200`
+	- `POST /ask` không key -> `401`
+	- `POST /ask` với `X-API-Key: secret-key-123` -> `200`
 
 ### Part 6 Requirement Mapping
 
@@ -305,7 +310,7 @@ Non-functional:
 - [x] Graceful shutdown.
 - [x] Stateless design với Redis.
 - [x] Structured JSON logging.
-- [ ] Deploy public URL cho Part 6 (chưa thực hiện trong mục này).
+- [x] Deploy public URL cho Part 6: `https://day12-lab-complete-production.up.railway.app`.
 
 ### Day12 Delivery Checklist (Liên quan Part 6)
 
@@ -314,8 +319,8 @@ Non-functional:
 - [x] Có `docker-compose.yml`, `requirements.txt`, `.env.example`, `.dockerignore`.
 - [x] Auth/rate-limit/cost-guard/health-ready/stateless đã được chạy runtime local; kết quả HTTP qua nginx phụ thuộc thời điểm readiness.
 - [x] Không hardcode secret trong code chính Part 6.
-- [ ] Public service domain cho Part 6 (nếu nộp theo checklist full).
+- [x] Public service domain cho Part 6: `https://day12-lab-complete-production.up.railway.app`.
 
 ## Tổng Kết Mục Chưa Hoàn Thành
 
-- Part 6: Chưa có public domain riêng cho service trong `06-lab-complete`.
+- Không còn mục bắt buộc nào chưa hoàn thành trong checklist hiện tại.
